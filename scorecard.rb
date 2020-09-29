@@ -11,14 +11,18 @@
 
 require 'ruby2d'
 
-require_relative 'lib/api'
+require_relative 'lib/event_parser'
+require_relative 'lib/game'
 require_relative 'lib/gfx'
 require_relative 'lib/gfx/at_bat_box'
+
+# @game = Game.new(game_id: '5631a0fa-bc2a-4fba-9787-51a6b4f7cabf')
 
 Window.set(
   background: 'white',
   title: 'Blaseball Scorecard'
 )
+
 
 GFX::AtBatBox.new(x: 10, y: 10, scale: 4,
   bases: [:hollow_crossed, :solid_crossed, :crossed_circled],
