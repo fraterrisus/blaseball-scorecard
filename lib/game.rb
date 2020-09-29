@@ -66,12 +66,6 @@ class Game
     datablase_api.get_player_info(playerIds: player_ids).parsed_response
   end
 
-  def raise_unless_top_of_first_inning!(event)
-    unless event['inning'] == 0 && event['top_of_inning']
-      raise("Can't parse game: first event isn't in the top of the 1st")
-    end
-  end
-
   def team_events_call(team_id:, time:)
     chronicler_api.get_team_updates(before: time, team: team_id, count: 1, order: 'desc').
       parsed_response

@@ -7,22 +7,27 @@ class EventParser
     inning = 0
     top_half = false
     batter_id = nil
-    @events.each do |event|
-      events = []
+    parsed_events = []
+    @events.each do |raw_event|
+      new_parsed_events = []
 
       if top_half
-        if !event['awayBatter'].nil? && event['awayBatter'] != batter_id
-          batter_id = event['awayBatter']
-          events += [{ event: :start_of_at_bat, id: event['awayBatter'], name: event['awayBatterName'] }]
+        away_batter = raw_event['awayBatter']
+        if away_batter && away_batter != "" && away_batter != batter_id
+          batter_id = away_batter
+          new_parsed_events += [{ event: :start_of_at_bat, id: raw_event['awayBatter'],
+            name: raw_event['awayBatterName'] }]
         end
       else
-        if !event['homeBatter'].nil? && event['homeBatter'] != batter_id
-          batter_id = event['homeBatter']
-          events += [{ event: :start_of_at_bat, id: event['homeBatter'], name: event['homeBatterName'] }]
+        home_batter = raw_event['homeBatter']
+        if home_batter && home_batter != "" && home_batter != batter_id
+          batter_id = home_batter
+          new_parsed_events += [{ event: :start_of_at_bat, id: raw_event['homeBatter'],
+            name: raw_event['homeBatterName'] }]
         end
       end
 
-      events += case event['lastUpdate']
+      new_parsed_events += case raw_event['lastUpdate']
       when 'Play ball!'
         []
       when 'Game over.'
@@ -56,40 +61,44 @@ class EventParser
         [{ event: :end_of_at_bat, type: :sacrifice }]
       when /hits a (\w+)!/
         [{ event: :end_of_at_bat, type: $1.downcase.to_sym }]
-      when /hits a (\d+-run home run|grand slam)!\z/
+      when /hits a (solo home run|\d+-run home run|grand slam)!\z/
         [{ event: :end_of_at_bat, type: :home_run }]
       when /reaches on fielder's choice/
         [{ event: :end_of_at_bat, type: :fielders_choice }]
+      when /(.*) gets caught stealing (\w*) base\./
+        [{ event: :stolen_base, base: ordinal($2), success: false}]
       when /(.*) steals (\w*) base!/
-        [{ event: :stolen_base, base: ordinal($2) }]
+        [{ event: :stolen_base, base: ordinal($2), success: true }]
       else
-        STDERR.puts "Unrecognized update string: '#{event['lastUpdate']}'"
+        STDERR.puts "Unrecognized update string: '#{raw_event['lastUpdate']}'"
         []
       end
 
       if top_half
-        if event['topOfInning'] == false
+        if raw_event['topOfInning'] == false
           top_half = false
           batter_id = nil
-          events += [{ event: :start_of_inning, inning: inning, half: (top_half ? :top : :bottom) }]
+          new_parsed_events += [{ event: :start_of_inning, inning: inning, half: (top_half ? :top : :bottom) }]
         end
       else
-        if event['topOfInning'] == true
+        if raw_event['topOfInning'] == true
           top_half = true
           inning += 1
           batter_id = nil
-          events += [{event: :start_of_inning, inning: inning, half: (top_half ? :top : :bottom) }]
+          new_parsed_events += [{event: :start_of_inning, inning: inning, half: (top_half ? :top : :bottom) }]
         end
       end
 
-      events.each do |ev|
-        puts ev
-
+      new_parsed_events.each do |ev|
         if ev[:event] == :end_of_at_bat
           batter_id = nil
         end
       end
+
+      parsed_events += new_parsed_events
     end
+
+    parsed_events
   end
 
   private

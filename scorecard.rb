@@ -16,7 +16,15 @@ require_relative 'lib/game'
 require_relative 'lib/gfx'
 require_relative 'lib/gfx/at_bat_box'
 
-# @game = Game.new(game_id: '5631a0fa-bc2a-4fba-9787-51a6b4f7cabf')
+arg = ARGV[0]
+if File.exist?(arg)
+  game_events = JSON.parse(File.read(arg))
+else
+  game_events = Game.new(game_id: arg).events
+end
+
+EventParser.new(game_events).parse.each { |ev| puts ev }
+exit(0)
 
 Window.set(
   background: 'white',
