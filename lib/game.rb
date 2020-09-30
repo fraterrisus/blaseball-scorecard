@@ -9,6 +9,22 @@ class Game
 
   attr_reader :events, :game_id, :away_team_id, :home_team_id, :real_time, :day, :season, :weather
 
+  def our_lineup(top_half)
+    if top_half
+      lineups['away']
+    else
+      lineups['home']
+    end
+  end
+
+  def their_lineup(top_half)
+    if top_half
+      lineups['home']
+    else
+      lineups['away']
+    end
+  end
+
   def lineups
     @lineups ||= {
       'away' => get_lineup_for(team_id: away_team_id, time: real_time),

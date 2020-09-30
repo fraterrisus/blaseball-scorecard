@@ -2,15 +2,18 @@
 
 A ruby script that draws a scorecard for a game of Blaseball (http://blaseball.com).
 
-Thanks to SIBR for hosting the data.
+Thanks to SIBR and [Blaseball Reference](https://blaseball-reference.com/) for collecting and
+hosting the data and making APIs available.
 
-## Outstanding Questions
+## Requirements
+`ruby-2.6.6`, plus a few standard gems: `httparty`, `rspec`
 
-Chronicler::GameEvent has a `terminology` field. What is that for? 
+Uses the `ruby2d` gem to draw graphics.
 
-Chronicler is more-raw data, captured straight from the live feed. Dealing with it will require
-parsing strings and generating events by hand.
+## Usage
+`./scorecard.rb game-id` where `game-id` is a [SIBR Reblaze](http://reblase.sibr.dev) game ID. This
+will pull data from Datablase and Chronicler and (for the purposes of development) dump it into two
+files named `chr-game-updates-uuid.json` and `chr-game-lineups-uuid.json`.
 
-The Datablase is an event-parsed version of the Chronicler data. It is generally gathered into a
-series of events, plus all pitches that led up to that event. Possibly, it will be easier to parse
-the many typed data fields than to recreate them ourselves.
+You can then reload those files with `./scorecard.rb chr-game-updates-(game-id).json` (the `lineups`
+filename is inferred).

@@ -90,6 +90,8 @@ class EventParser
       end
 
       new_parsed_events.each do |ev|
+        ev[:runner_ids] = raw_event['baseRunners'].zip(raw_event['basesOccupied']).to_h
+
         if ev[:event] == :end_of_at_bat
           batter_id = nil
         end

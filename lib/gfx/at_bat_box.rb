@@ -1,8 +1,8 @@
 module GFX
   class AtBatBox
     def initialize(x:, y:, scale:, **opts)
-      @top = x
-      @left = y
+      @top = y
+      @left = x
       @scale = scale
 
       balls = opts[:balls] || [nil, nil, nil, nil]
