@@ -12,11 +12,11 @@
 require 'ruby2d'
 
 require_relative 'lib/at_bat'
-require_relative 'lib/at_bat_builder'
 require_relative 'lib/event_parser'
 require_relative 'lib/game'
 require_relative 'lib/gfx'
 require_relative 'lib/gfx/at_bat_box'
+require_relative 'lib/scorecard_builder'
 
 arg = ARGV[0]
 if File.exist?(arg)
@@ -30,10 +30,7 @@ else
 end
 
 parsed_events = EventParser.new(@game.events).parse
-
-builder = AtBatBuilder.new(@game, parsed_events)
-builder.build
-boxes = builder.game_at_bats
+boxes = ScorecardBuilder.new(@game, parsed_events).game_at_bats
 
 Window.set(
   background: 'white',

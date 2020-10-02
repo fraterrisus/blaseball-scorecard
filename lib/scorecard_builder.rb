@@ -1,4 +1,4 @@
-class AtBatBuilder
+class ScorecardBuilder
   def initialize(game, events)
     @game = game
     @events = events
@@ -9,11 +9,7 @@ class AtBatBuilder
     @current_at_bats = []
     @current_runners = {}
     @inning_at_bats = []
-  end
 
-  attr_reader :game_at_bats
-
-  def build
     @events.each do |ev|
       puts ev
       self.send(ev[:event], ev)
@@ -23,14 +19,9 @@ class AtBatBuilder
     finish_inning
   end
 
-  private
+  attr_reader :game_at_bats
 
-  def finish_inning
-    if @inning_at_bats.any?
-      @game_at_bats[@current_inning - 1] ||= {}
-      @game_at_bats[@current_inning - 1][@current_half_inning] = @inning_at_bats
-    end
-  end
+  private
 
   # events
 
@@ -44,31 +35,31 @@ class AtBatBuilder
     when :strikeout
       hitter.strikeout
     when :flyout
-      fielder_index = help_find_fielder(@current_half_inning, ev[:fielder_name])
+      fielder_index = find_fielder(@current_half_inning, ev[:fielder_name])
       hitter.fly_out_to(fielder_index)
     when :groundout
-      fielder_index = help_find_fielder(@current_half_inning, ev[:fielder_name])
+      fielder_index = find_fielder(@current_half_inning, ev[:fielder_name])
       hitter.ground_out_to(fielder_index)
       @current_at_bats[0] = nil
       if ev[:outs] != 0 # wraps around to 0 immediately after the 3rd out
-        help_diff_runners(new_runners)
+        diff_runners(new_runners)
       end
     when :double_play
       hitter.double_play
-      help_diff_runners(new_runners, :out)
+      diff_runners(new_runners, :out)
     when :triple_play
       hitter.triple_play
-      help_diff_runners(new_runners, :out)
+      diff_runners(new_runners, :out)
     when :fielders_choice
-      help_diff_runners(new_runners, :fielders_choice)
+      diff_runners(new_runners, :fielders_choice)
     when :walk
-      help_diff_runners(new_runners, :walk)
+      diff_runners(new_runners, :walk)
     when :single, :double, :triple, :home_run
-      help_diff_runners(new_runners)
+      diff_runners(new_runners)
     when :sacrifice
       hitter.sacrifice
       @current_at_bats[0] = nil
-      help_diff_runners(new_runners)
+      diff_runners(new_runners)
     else
       raise 'Unrecognized event type!'
     end
@@ -119,13 +110,20 @@ class AtBatBuilder
   end
 
   # Top 3, flyout to Dominic Marijuana doesn't find him
-  def help_find_fielder(current_half_inning, fielder_name)
+  def find_fielder(current_half_inning, fielder_name)
     @game.their_lineup(current_half_inning == :top).index do |p|
       p['player_name'] == fielder_name
     end
   end
 
-  def help_diff_runners(new, type = :hit)
+  def finish_inning
+    if @inning_at_bats.any?
+      @game_at_bats[@current_inning - 1] ||= {}
+      @game_at_bats[@current_inning - 1][@current_half_inning] = @inning_at_bats
+    end
+  end
+
+  def diff_runners(new, type = :hit)
     prev_at_bats = @current_at_bats
     new_at_bats = [nil, nil, nil, nil]
     prev_at_bats.each_with_index do |runner, prev_base|

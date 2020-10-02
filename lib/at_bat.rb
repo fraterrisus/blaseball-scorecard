@@ -13,27 +13,42 @@ class AtBat
     @out = false
   end
 
+  ##### ##### ##### ##### #####
+
+  attr_reader :id
+
+  def current_base
+    @current_base + 1
+  end
+
+  def out?
+    @out
+  end
+
+  def to_h
+    {
+      bases: @bases,
+      paths: @paths,
+      balls: @balls,
+      strikes: @strikes,
+      rbis: @rbis,
+      center_text: @center_text,
+      corner_text: @corner_text
+    }.compact
+  end
+
   def to_s
     id
   end
 
-  attr_reader :current_base, :id
+  ##### ##### ##### ##### #####
 
   def advance_to(adjusted_base, type)
     base = adjusted_base - 1
     puts "#{id}#advance_to(#{ordinal(base)}, #{type})"
 
-    (@current_base...base).each do |i|
-      @paths[i+1] = path_type(type)
-    end
-    @bases[base] = base_type(type)
-
-    if type == :walk
-      @corner_text = 'BB'
-    elsif type == :fielders_choice
-      @corner_text = 'FC'
-    end
-
+    update_bases_and_paths(base, type)
+    update_corner_text(type)
     @current_base = base
 
     puts to_h
@@ -46,16 +61,12 @@ class AtBat
   def caught_stealing(adjusted_base)
     base = adjusted_base - 1
     puts "#{id}#caught_stealing(#{ordinal(base)})"
-
-    (@current_base...base).each do |i|
-      @paths[i] = path_type(:caught_stealing)
-    end
-    @bases[base-1] = base_type(:caught_stealing)
+    update_bases_and_paths(base, :caught_stealing)
     @out = true
   end
 
   def double_play
-    @corner_text = '2P'
+    update_corner_text('2P')
     @out = true
   end
 
@@ -66,15 +77,14 @@ class AtBat
 
   def ground_out_to(fielder_num)
     @center_text = [fielder_num.to_s]
-    @bases[0] = base_type(:out)
+    update_bases_and_paths(0, :out)
     @out = true
   end
 
   def out_at(adjusted_base)
     base = adjusted_base - 1
     puts "#{id}#out_at(#{ordinal(base)})"
-
-    @bases[base] = base_type(:out)
+    update_bases_and_paths(base, :out)
     @out = true
   end
 
@@ -96,20 +106,8 @@ class AtBat
     @out = true
   end
 
-  def to_h
-    {
-      bases: @bases,
-      paths: @paths,
-      balls: @balls,
-      strikes: @strikes,
-      rbis: @rbis,
-      center_text: @center_text,
-      corner_text: @corner_text
-    }.compact
-  end
-
   def triple_play
-    @corner_text = '3P'
+    update_corner_text('3P')
     @out = true
   end
 
@@ -145,6 +143,19 @@ class AtBat
     end
   end
 
+  def corner_text_type(type)
+    case type
+    when :walk
+      'BB'
+    when :fielders_choice
+      'FC'
+    when :error
+      'E'
+    else
+      nil
+    end
+  end
+
   def path_type(type)
     case type
     when :hit, :fielders_choice, :walk
@@ -153,7 +164,7 @@ class AtBat
       :hashed
     when :error
       :double_hashed
-    when :caught_stealing
+    when :caught_stealing, :out
       nil
     else
       raise(ArgumentError, "Don't know what a '#{type}' path is'")
@@ -170,6 +181,23 @@ class AtBat
       :crossed
     else
       raise ArgumentError("Don't know what a '#{type}' strike is'")
+    end
+  end
+
+  def update_bases_and_paths(base, type)
+    (current_base..base).each do |i|
+      @paths[i] = path_type(type)
+    end
+    @bases[base] = base_type(type)
+  end
+
+  def update_corner_text(type)
+    case type
+    when String
+      @corner_text = type
+    when Symbol
+      # Allow a new update to overwrite what's there, but if the value is nil, retain what we had
+      @corner_text = corner_text_type(type) || @corner_text
     end
   end
 end
