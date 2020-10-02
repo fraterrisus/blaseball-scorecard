@@ -19,3 +19,5 @@ files named `chr-game-updates-uuid.json` and `chr-game-lineups-uuid.json`.
 
 You can then reload those files with `./scorecard.rb chr-game-updates-(game-id).json` (the `lineups`
 filename is inferred).
+
+Press Escape to close the scorecard window after it renders.
