@@ -13,7 +13,7 @@ Uses the `ruby2d` gem to draw graphics.
 ## Usage
 `bundle install` to install dependencies.
 
-`./scorecard.rb game-id` where `game-id` is a [SIBR Reblaze](http://reblase.sibr.dev) game ID. This
+`./scorecard.rb game-id` where `game-id` is a [SIBR Reblase](http://reblase.sibr.dev) game ID. This
 will pull data from Datablase and Chronicler and (for the purposes of development) dump it into two
 files named `chr-game-updates-uuid.json` and `chr-game-lineups-uuid.json`.
 
