@@ -12,17 +12,11 @@
 require 'ruby2d'
 
 require_relative 'lib/at_bat'
+require_relative 'lib/at_bat_builder'
 require_relative 'lib/event_parser'
 require_relative 'lib/game'
 require_relative 'lib/gfx'
 require_relative 'lib/gfx/at_bat_box'
-
-class GameFile < Game
-  def initialize(events:, lineups:)
-    @events = events
-    @lineups = lineups
-  end
-end
 
 arg = ARGV[0]
 if File.exist?(arg)
@@ -37,88 +31,38 @@ end
 
 parsed_events = EventParser.new(@game.events).parse
 
-def diff_runners_on_hit(prev, new, prev_at_bats)
-  new_at_bats = [nil, nil, nil, nil]
-  prev.each do |id, prev_base|
-    runner = prev_at_bats[prev_base+1] # incoming base IDs are -1 based; array index is 0-based
-    raise "Runner mismatch at base #{prev_base+1}, expected #{id}, found #{runner.id}" unless id == runner.id
-    new_base = new[id]+1 || 3
-    runner.advance_to(new_base)
-    new_at_bats[new_base] = runner unless new_base == 3
-  end
-  new_at_bats
-end
-
-game_at_bats = []
-current_inning = 0
-current_half_inning = nil
-current_at_bats = []
-current_runners = {}
-inning_at_bats = []
-parsed_events.each do |ev|
-  puts ev
-
-  case ev[:event]
-  when :start_of_inning
-    break if inning_at_bats.any?
-    inning_at_bats = []
-    current_inning = ev[:inning]
-    current_half_inning = ev[:half]
-    current_at_bats = [ nil, nil, nil, nil ]
-  when :start_of_at_bat
-    raise 'Home plate is occupied!' unless current_at_bats[0].nil?
-    new_at_bat = AtBat.new(id: ev[:id])
-    current_at_bats[0] = new_at_bat
-    inning_at_bats << new_at_bat
-  when :end_of_at_bat
-    case ev[:type]
-    when :flyout
-      fielder_index = @game.their_lineup(current_half_inning == :top).index do |p|
-        p['player_name'] == ev[:fielder_name]
-      end
-      current_at_bats[0].fly_out_to(fielder_index)
-    when :groundout
-      fielder_index = @game.their_lineup(current_half_inning == :top).index do |p|
-        p['player_name'] == ev[:fielder_name]
-      end
-      current_at_bats[0].ground_out_to(fielder_index)
-    when :single, :double, :triple, :home_run
-      hitter_id = current_at_bats[0].id
-      prev_runners = current_runners.merge(hitter_id => -1)
-      new_runners = ev[:runner_ids]
-      current_at_bats = diff_runners_on_hit(prev_runners, new_runners, current_at_bats)
-      current_runners = new_runners
-    when :stolen_base
-    else
-      raise 'Unrecognized event type!'
-    end
-    current_at_bats[0] = nil
-  when :ball
-    current_at_bats[0].ball
-  when :strike
-    current_at_bats[0].strike(ev[:type])
-  else
-    raise 'Unrecognized event!'
-  end
-end
+builder = AtBatBuilder.new(@game, parsed_events)
+builder.build
+boxes = builder.game_at_bats
 
 Window.set(
   background: 'white',
   title: 'Blaseball Scorecard',
-  height: 800,
-  width: 400
 )
 
-x = 10
+scale = 1
+maxy = 100 * scale * 9
 y = 10
-inning_at_bats.each do |at_bat|
-  options = {x: x, y: y, scale: 2}.merge(at_bat.to_h)
-  new_box = GFX::AtBatBox.new(options)
-  y = new_box.y2
+x = 10
+boxes.each do |box|
+  x2 = x
+  box.each do |half, at_bats|
+    if half == :top
+      at_bats.each do |at_bat|
+        options = {x: x, y: y, scale: scale}.merge(at_bat.to_h)
+        new_box = GFX::AtBatBox.new(options)
+        y = new_box.y2
+        y = 10 if y > maxy
+        x2 = new_box.x2
+      end
+    end
+  end
+  x = x2
 end
 
 Window.set(
-  height: y + 10
+  height: maxy + 20,
+  width: x + 10
 )
 
 on :key_down do |event|

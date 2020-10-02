@@ -87,3 +87,10 @@ class Game
       parsed_response
   end
 end
+
+class GameFile < Game
+  def initialize(events:, lineups:)
+    @events = events
+    @lineups = lineups
+  end
+end
