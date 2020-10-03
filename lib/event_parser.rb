@@ -41,7 +41,7 @@ class EventParser
       when /draws a walk\.\z/
         [
           { event: :ball },
-          { event: :end_of_at_bat, type: :walk, outs: raw_event['halfInningOuts'] }
+          { event: :end_of_at_bat, type: :walk }
         ]
       when /\AStrike, (.*)\./
         [{ event: :strike, type: $1.downcase.to_sym }]
@@ -50,7 +50,7 @@ class EventParser
       when /(strikes|struck) out (\w+)\.\z/
         [
           { event: :strike, type: $2.downcase.to_sym },
-          { event: :end_of_at_bat, type: :strikeout, outs: raw_event['halfInningOuts'] }
+          { event: :end_of_at_bat, type: :strikeout }
         ]
       when /hit a (.*out) to (.+)\.\z/
         type, fielder = $1, $2
@@ -58,20 +58,20 @@ class EventParser
           outs: raw_event['halfInningOuts'] }]
       when /hit into a (double play|triple play)!\z/
         puts raw_event
-        [{ event: :end_of_at_bat, type: $1.gsub(/\s/, '_').to_sym, outs: raw_event['halfInningOuts'] }]
+        [{ event: :end_of_at_bat, type: $1.gsub(/\s/, '_').to_sym }]
       when /on the sacrifice.\z/
-        [{ event: :end_of_at_bat, type: :sacrifice, outs: raw_event['halfInningOuts'] }]
+        [{ event: :end_of_at_bat, type: :sacrifice }]
       when /hits a (\w+)!/
-        [{ event: :end_of_at_bat, type: $1.downcase.to_sym, outs: raw_event['halfInningOuts'] }]
+        [{ event: :end_of_at_bat, type: $1.downcase.to_sym }]
       when /hits a (solo home run|\d+-run home run|grand slam)!\z/
-        [{ event: :end_of_at_bat, type: :home_run, outs: raw_event['halfInningOuts'] }]
+        [{ event: :end_of_at_bat, type: :home_run }]
       when /reaches on fielder's choice.*out at (\w+) base/
         [{ event: :end_of_at_bat, type: :fielders_choice, base: ordinal($1),
           outs: raw_event['halfInningOuts'] }]
       when /(.*) gets caught stealing (\w*) base\./
-        [{ event: :stolen_base, base: ordinal($2), success: false, outs: raw_event['halfInningOuts'] }]
+        [{ event: :stolen_base, base: ordinal($2), success: false }]
       when /(.*) steals (\w*) base!/
-        [{ event: :stolen_base, base: ordinal($2), success: true, outs: raw_event['halfInningOuts'] }]
+        [{ event: :stolen_base, base: ordinal($2), success: true }]
       else
         STDERR.puts "Unrecognized update string: '#{raw_event['lastUpdate']}'"
         []
@@ -98,6 +98,9 @@ class EventParser
         if ev[:event] == :end_of_at_bat
           batter_id = nil
         end
+
+        ev[:outs] = raw_event['halfInningOuts']
+        ev[:runs] = raw_event['halfInningScore']
       end
 
       parsed_events += new_parsed_events

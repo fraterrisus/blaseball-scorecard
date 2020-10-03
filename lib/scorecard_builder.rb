@@ -4,11 +4,13 @@ class ScorecardBuilder
     @events = events
 
     @game_at_bats = []
+    @game_score = []
     @current_inning = 0
     @current_half_inning = nil
     @current_at_bats = []
     @current_runners = {}
     @inning_at_bats = []
+    @current_score = 0
 
     @events.each do |ev|
       puts ev
@@ -19,7 +21,7 @@ class ScorecardBuilder
     finish_inning
   end
 
-  attr_reader :game_at_bats
+  attr_reader :game_at_bats, :game_score
 
   private
 
@@ -30,6 +32,7 @@ class ScorecardBuilder
   end
 
   def end_of_at_bat(ev)
+    hitter.rbis = ev[:runs] - @current_score
     new_runners = ev[:runner_ids]
     case ev[:type]
     when :strikeout
@@ -72,6 +75,7 @@ class ScorecardBuilder
     new_at_bat = AtBat.new(id: ev[:id])
     @current_at_bats[0] = new_at_bat
     @inning_at_bats << new_at_bat
+    @current_score = ev[:runs]
   end
 
   def start_of_inning(ev)
@@ -121,6 +125,8 @@ class ScorecardBuilder
     if @inning_at_bats.any?
       @game_at_bats[@current_inning - 1] ||= {}
       @game_at_bats[@current_inning - 1][@current_half_inning] = @inning_at_bats
+      @game_score[@current_inning - 1] ||= {}
+      @game_score[@current_inning - 1][@current_half_inning] = @current_score
     end
   end
 

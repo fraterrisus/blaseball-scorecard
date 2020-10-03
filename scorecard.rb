@@ -30,7 +30,8 @@ else
 end
 
 parsed_events = EventParser.new(@game.events).parse
-boxes = ScorecardBuilder.new(@game, parsed_events).game_at_bats
+scorecard = ScorecardBuilder.new(@game, parsed_events)
+boxes = scorecard.game_at_bats
 
 Window.set(
   background: 'white',
@@ -43,9 +44,19 @@ def draw_batter_label(scale, batter, spot)
 end
 
 def draw_inning_label(scale, inning)
-  @columns += 1
-  text = Text.new(inning.to_s, x: (100 * scale * (inning - 0.5)) + 310, y:(100 * scale / 4) + 10,
-    size: 24 * scale, color: 'black', z: 5)
+  @columns << inning
+  text_x = (100 * scale * (inning - 0.5)) + 310
+  text_y = (100 * scale / 4) + 10
+  text = Text.new(inning.to_s, x: text_x, y: text_y, size: 24 * scale, color: 'black', z: 5)
+  text.x = text.x - (text.width / 2)
+  text.y = text.y - (text.height / 2)
+end
+
+def draw_inning_score(scale, inning, score)
+  idx = @columns.rindex(inning)
+  text_x = (100 * scale * (inning + 0.5)) + 310
+  text_y = (100 * scale * (9.75))
+  text = Text.new(score.to_s, x: text_x, y: text_y, size: 24 * scale, color: 'black', z: 5)
   text.x = text.x - (text.width / 2)
   text.y = text.y - (text.height / 2)
 end
@@ -56,7 +67,7 @@ start_y = 100 * scale / 2
 start_x = 300 + 10
 draw_for_team = 'home'
 draw_for_half = :bottom
-@columns = 0
+@columns = []
 
 @game.lineups[draw_for_team].each_with_index do |batter, spot|
   name = batter['player_name']
@@ -99,7 +110,7 @@ boxes.each do |box|
   x = x2
 end
 
-(@columns+1).times do |col|
+(@columns.count+1).times do |col|
   x = start_x + (100 * col * scale)
   Line.new(x1: x, x2: x, y1: 10, y2: maxy - 10, color: GFX::BLUE_LINE, z: 5)
 end
@@ -109,9 +120,13 @@ y = start_y
   y += 100 * scale
 end
 
+scorecard.game_score.each_with_index do |inning, idx|
+  draw_inning_score(scale, idx, inning[draw_for_half])
+end
+
 Window.set(
   height: maxy,
-  width: (@columns * 100 * scale) + 350
+  width: (@columns.count * 100 * scale) + 350
 )
 
 on :key_down do |event|

@@ -173,9 +173,9 @@ module GFX
         draw_dot(x: dot_x, y: dot_y, radius: solid_dot_radius, data: strike)
       end
 
-      dot_y = @left + @height - (2 * solid_dot_radius)
+      dot_y = @top + @height - (2 * solid_dot_radius)
       rbis.times do |i|
-        dot_x = @top + (2 * solid_dot_radius) + (2.5 * solid_dot_radius * i)
+        dot_x = @left + (2 * solid_dot_radius) + (2.5 * solid_dot_radius * i)
         Circle.new(x: dot_x, y: dot_y, radius: solid_dot_radius, color: SOLID_DOT, z: 10)
       end
     end

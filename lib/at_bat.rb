@@ -25,6 +25,10 @@ class AtBat
     @out
   end
 
+  def rbis=(rbis)
+    @rbis = rbis
+  end
+
   def to_h
     {
       bases: @bases,
