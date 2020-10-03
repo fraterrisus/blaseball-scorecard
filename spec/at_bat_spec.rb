@@ -2,13 +2,12 @@ require 'rspec'
 require_relative '../lib/at_bat'
 
 describe AtBat do
-  describe '#advance_to' do
-    subject { described_class.new(id: 'test') }
+  subject { described_class.new(id: 'test') }
 
-    before do
-      subject.send(:update_corner_text, 'test')
-      subject.advance_to(target, type)
-    end
+  before { subject.send(:update_corner_text, 'test') }
+
+  describe '#advance_to' do
+    before { subject.advance_to(target, type) }
 
     let(:target) { 1 }
     let(:type) { :hit }
@@ -62,7 +61,7 @@ describe AtBat do
       it { expect(first_base).to be :solid }
       it { is_expected.to_not be_out }
       it { is_expected.to_not be_at :home }
-      it { is_expected.to not_overwrite_corner_text }
+      it { is_expected.to not_set_corner_text }
     end
 
     context "when advancing on a fielder's choice" do
@@ -110,55 +109,46 @@ describe AtBat do
       it { expect(first_base).to be :solid }
       it { is_expected.to_not be_out }
       it { is_expected.to_not be_at :home }
-      it { is_expected.to not_overwrite_corner_text }
+      it { is_expected.to not_set_corner_text }
     end
   end
 
   describe '#ball' do
-    subject { described_class.new(id: 'test') }
-
-    before { subject.send(:update_corner_text, 'test') }
-
     context 'first pitch' do
       before { subject.ball }
+
       it { is_expected.to set_balls_to :hollow }
       it { is_expected.to be_at :home }
-      it { is_expected.to not_overwrite_corner_text }
+      it { is_expected.to not_set_corner_text }
     end
 
     context 'after four balls' do
       before { 4.times { subject.ball } }
       it { is_expected.to set_balls_to :hollow, :hollow, :hollow, :hollow }
-      it { is_expected.to be_at :home }
-      it { is_expected.to not_overwrite_corner_text }
+
+      it 'does not automatically apply a walk' do
+        is_expected.to be_at :home
+        is_expected.to not_set_corner_text
+      end
     end
   end
 
   describe '#caught_stealing' do
-    subject { described_class.new(id: 'test') }
-
-    before do
-      subject.send(:update_corner_text, 'test')
-      subject.caught_stealing(1)
-    end
+    before { subject.caught_stealing(1) }
 
     it { expect(path_h_1).to be_nil }
     it { expect(first_base).to be :crossed_circled }
     it { is_expected.to be_out }
-    it { is_expected.to not_overwrite_corner_text }
+    it { is_expected.to not_set_corner_text }
   end
 
   describe '#double_play' do
-    subject { described_class.new(id: 'test') }
+    before { subject.double_play }
 
-    before do
-      subject.send(:update_corner_text, 'test')
-      subject.double_play
+    it 'expects the caller to apply base/path diffs' do
+      is_expected.to set_bases_to nil, nil, nil, nil
+      is_expected.to set_paths_to nil, nil, nil, nil
     end
-
-    # We expect the caller to apply diffs because multiple runners must be accounted for
-    it { is_expected.to set_bases_to nil, nil, nil, nil }
-    it { is_expected.to set_paths_to nil, nil, nil, nil }
 
     it { is_expected.to be_out }
     it { is_expected.to be_at :home }
@@ -166,40 +156,143 @@ describe AtBat do
   end
 
   describe '#fly_out_to' do
-    pending
+    before { subject.fly_out_to(5) }
+
+    it 'expects the caller to apply base/path diffs' do
+      is_expected.to set_bases_to nil, nil, nil, nil
+      is_expected.to set_paths_to nil, nil, nil, nil
+    end
+
+    it { is_expected.to be_out }
+    it { is_expected.to be_at :home }
+    it { is_expected.to set_center_text_to '5', :circled }
+    it { is_expected.to not_set_corner_text }
   end
 
   describe '#ground_out_to' do
-    pending
+    before { subject.ground_out_to(5) }
+
+    it { expect(first_base).to be :crossed }
+    it { expect(path_h_1).to be_nil }
+    it { is_expected.to be_out }
+    it { is_expected.to be_at :home }
+    it { is_expected.to set_center_text_to '5' }
+    it { is_expected.to not_set_corner_text}
   end
 
   describe '#out_at' do
-    pending
+    before { subject.out_at(target) }
+
+    context 'when out at the next base' do
+      let(:target) { 1 }
+
+      it { expect(first_base).to be :crossed }
+      it { expect(path_h_1).to be_nil }
+      it { is_expected.to be_out }
+      it { is_expected.to be_at :home }
+      it { is_expected.to not_set_corner_text }
+    end
+
+    context 'when out at a further base' do
+      let(:target) { 2 }
+
+      it { expect(first_base).to be nil }
+      it { expect(second_base).to be :crossed }
+      it { expect(path_h_1).to be_nil }
+      it { expect(path_1_2).to be_nil }
+      it { is_expected.to be_out }
+      it { is_expected.to be_at :home }
+    end
   end
 
   describe '#sacrifice' do
-    pending
+    before { subject.sacrifice }
+
+    it 'expects the caller to apply base/path diffs' do
+      is_expected.to set_bases_to nil, nil, nil, nil
+      is_expected.to set_paths_to nil, nil, nil, nil
+    end
+
+    it { is_expected.to be_out }
+    it { is_expected.to be_at :home }
+    it { is_expected.to set_center_text_to :squared }
+    it { is_expected.to not_set_corner_text }
   end
 
   describe '#strike' do
-    pending
+    context 'for a swinging strike' do
+      before { subject.strike(:swinging) }
+
+      it { is_expected.to set_strikes_to :solid }
+      it { is_expected.to_not be_out }
+      it { is_expected.to be_at :home }
+      it { is_expected.to not_set_center_text }
+    end
+
+    context 'for a looking strike' do
+      before { subject.strike(:looking) }
+
+      it { is_expected.to set_strikes_to :hollow }
+      it { is_expected.to_not be_out }
+      it { is_expected.to be_at :home }
+      it { is_expected.to not_set_center_text }
+    end
+
+    context 'for a foul ball' do
+      before { subject.strike(:foul_ball) }
+
+      it { is_expected.to set_strikes_to :crossed }
+      it { is_expected.to_not be_out }
+      it { is_expected.to be_at :home }
+      it { is_expected.to not_set_center_text }
+    end
+
+    context 'for four strikes' do
+      before { 4.times { subject.strike(:swinging) } }
+
+      it { is_expected.to set_strikes_to :solid, :solid, :solid, :solid }
+
+      it 'does not automatically register the strikeout' do
+        is_expected.to_not be_out
+        is_expected.to be_at :home
+        is_expected.to not_set_center_text
+      end
+    end
   end
 
   describe '#strikeout' do
-    pending
+    context 'when the last strike was looking' do
+      before do
+        subject.strike(:looking)
+        subject.strikeout
+      end
+
+      it { is_expected.to be_out }
+      it { is_expected.to be_at :home }
+      it { is_expected.to set_center_text_to 'K', :reversed }
+      it { is_expected.to not_set_corner_text }
+    end
+
+    context 'when the last strike was not looking' do
+      before do
+        subject.strike(:foul_ball)
+        subject.strikeout
+      end
+
+      it { is_expected.to be_out }
+      it { is_expected.to be_at :home }
+      it { is_expected.to set_center_text_to 'K' }
+      it { is_expected.to not_set_corner_text }
+    end
   end
 
   describe '#triple_play' do
-    subject { described_class.new(id: 'test') }
+    before { subject.triple_play }
 
-    before do
-      subject.send(:update_corner_text, 'test')
-      subject.triple_play
+    it 'expects the caller to apply base/path diffs' do
+      is_expected.to set_bases_to nil, nil, nil, nil
+      is_expected.to set_paths_to nil, nil, nil, nil
     end
-
-    # We expect the caller to apply diffs because multiple runners must be accounted for
-    it { is_expected.to set_bases_to nil, nil, nil, nil }
-    it { is_expected.to set_paths_to nil, nil, nil, nil }
 
     it { is_expected.to be_out }
     it { is_expected.to be_at :home }
@@ -242,7 +335,7 @@ describe AtBat do
 
   RSpec::Matchers.define :be_at do |expected|
     match do |actual|
-      @actual = case actual.current_base
+      actual_base = case actual.current_base
       when 0,4
         :home
       when 1
@@ -254,7 +347,7 @@ describe AtBat do
       else
         nil
       end
-      values_match? @actual, expected
+      values_match? actual_base, expected
     end
     diffable
   end
@@ -262,33 +355,34 @@ describe AtBat do
   %w(balls bases paths strikes).each do |field|
     RSpec::Matchers.define "set_#{field}_to".to_sym do |*expected|
       match do |actual|
-        @actual = actual.to_h[field.to_sym]
-        values_match? expected, @actual
+        values_match? expected, actual.to_h[field.to_sym]
       end
       diffable
     end
   end
 
-  RSpec::Matchers.define :set_center_text_to do |expected|
+  RSpec::Matchers.define :not_set_center_text do
     match do |actual|
-      @actual = actual.to_h[:center_text]
-      values_match? expected, @actual
+      actual.to_h[:center_text].nil?
+    end
+  end
+
+  RSpec::Matchers.define :set_center_text_to do |*expected|
+    match do |actual|
+      values_match? expected, Array(actual.to_h[:center_text])
     end
     diffable
   end
 
-  RSpec::Matchers.define :not_overwrite_corner_text do
+  RSpec::Matchers.define :not_set_corner_text do
     match do |actual|
-      @actual = actual.to_h[:corner_text]
-      values_match? 'test', @actual
+      values_match? 'test', actual.to_h[:corner_text]
     end
-    diffable
   end
 
-  RSpec::Matchers.define :set_corner_text_to do |expected|
+  RSpec::Matchers.define :set_corner_text_to do |*expected|
     match do |actual|
-      @actual = actual.to_h[:corner_text]
-      values_match? expected, @actual
+      values_match? expected, Array(actual.to_h[:corner_text])
     end
     diffable
   end
