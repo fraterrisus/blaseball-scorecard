@@ -1,4 +1,4 @@
-class AtBat
+class PlateAppearance
   def initialize(id:)
     @current_base = -1
 

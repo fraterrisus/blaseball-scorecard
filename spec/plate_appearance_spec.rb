@@ -1,7 +1,7 @@
 require 'rspec'
-require_relative '../lib/at_bat'
+require_relative '../lib/plate_appearance'
 
-describe AtBat do
+describe PlateAppearance do
   subject { described_class.new(id: 'test') }
 
   before { subject.send(:update_corner_text, 'test') }

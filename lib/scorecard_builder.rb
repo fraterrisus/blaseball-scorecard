@@ -72,7 +72,7 @@ class ScorecardBuilder
 
   def start_of_at_bat(ev)
     raise 'Home plate is occupied!' unless hitter.nil?
-    new_at_bat = AtBat.new(id: ev[:id])
+    new_at_bat = PlateAppearance.new(id: ev[:id])
     @current_at_bats[0] = new_at_bat
     @inning_at_bats << new_at_bat
     @current_score = ev[:runs]

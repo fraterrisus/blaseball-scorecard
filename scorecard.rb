@@ -5,17 +5,14 @@
 #   https://reblase.sibr.dev/game/5631a0fa-bc2a-4fba-9787-51a6b4f7cabf
 # S5 D5  Fridays v Magic: full-lineup reverb
 #   https://reblase.sibr.dev/game/8ef67ba1-aab3-4129-92a3-d258ae9a4358
-#
-# Notation check:
-#   maybe walks should also have an open circle at 1st since they aren't at-bats
 
 require 'ruby2d'
 
-require_relative 'lib/at_bat'
 require_relative 'lib/event_parser'
 require_relative 'lib/game'
 require_relative 'lib/gfx'
 require_relative 'lib/gfx/at_bat_box'
+require_relative 'lib/plate_appearance'
 require_relative 'lib/scorecard_builder'
 
 arg = ARGV[0]
@@ -54,7 +51,7 @@ end
 
 def draw_inning_score(scale, inning, score)
   idx = @columns.rindex(inning)
-  text_x = (100 * scale * (inning + 0.5)) + 310
+  text_x = (100 * scale * (idx + 0.5)) + 310
   text_y = (100 * scale * (9.75))
   text = Text.new(score.to_s, x: text_x, y: text_y, size: 24 * scale, color: 'black', z: 5)
   text.x = text.x - (text.width / 2)
@@ -121,7 +118,7 @@ y = start_y
 end
 
 scorecard.game_score.each_with_index do |inning, idx|
-  draw_inning_score(scale, idx, inning[draw_for_half])
+  draw_inning_score(scale, idx+1, inning[draw_for_half])
 end
 
 Window.set(
