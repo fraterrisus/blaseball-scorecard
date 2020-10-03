@@ -108,10 +108,6 @@ class EventParser
 
   private
 
-  def end_of_at_bat ; end
-
-  def end_of_half_inning ; end
-
   def ordinal(word)
     case word
     when 'first'

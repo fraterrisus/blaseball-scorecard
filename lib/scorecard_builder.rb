@@ -111,9 +111,10 @@ class ScorecardBuilder
 
   # Top 3, flyout to Dominic Marijuana doesn't find him
   def find_fielder(current_half_inning, fielder_name)
-    @game.their_lineup(current_half_inning == :top).index do |p|
+    idx = @game.their_lineup(current_half_inning == :top).index do |p|
       p['player_name'] == fielder_name
     end
+    idx ? idx + 1 : 0
   end
 
   def finish_inning
