@@ -1,0 +1,19 @@
+* test batter reverb and add support for visualization
+* add support for lineup reverb / substitutions
+* add icons from http://game-icons.net
+* figure out PNG export
+* make sure Stolen Base detection catches both "fourth" /and/ "home"
+
+
+Notorious games:
+S8 D48 Mills v Lovers: Don Mitchell reverberates (multiple times)
+  https://reblase.sibr.dev/game/5631a0fa-bc2a-4fba-9787-51a6b4f7cabf
+S5 D5  Fridays v Magic: full-lineup reverb
+  https://reblase.sibr.dev/game/8ef67ba1-aab3-4129-92a3-d258ae9a4358
+S9 D1  Fridays v Garages: Crows cause the batter to get out
+  https://reblase.sibr.dev/game/d86f4eac-3df3-444d-9b97-abc53a4abb2a
+S9 D1  Jazz Hands v Lovers: FC+run scored; Crows; 15 OUTS in ^12
+  https://reblase.sibr.dev/game/d8b6e7e6-ad7f-4220-88de-c8e235f337f1
+S9 D1  someone named Dale 'zaps' a strike
+S9 D13 Garages v Steaks: lots of batter reverb
+  https://reblase.sibr.dev/game/71e443cd-7423-4907-af5b-63b5a1d45e4e

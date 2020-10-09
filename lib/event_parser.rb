@@ -28,6 +28,8 @@ class EventParser
       end
 
       new_parsed_events += case raw_event['lastUpdate']
+      when ''
+        []
       when 'Play ball!'
         []
       when 'Game over.'
@@ -59,7 +61,7 @@ class EventParser
       when /hit into a (double play|triple play)!\z/
         puts raw_event
         [{ event: :end_of_at_bat, type: $1.gsub(/\s/, '_').to_sym }]
-      when /on the sacrifice.\z/
+      when /sacrifice/
         [{ event: :end_of_at_bat, type: :sacrifice }]
       when /hits a (\w+)!/
         [{ event: :end_of_at_bat, type: $1.downcase.to_sym }]

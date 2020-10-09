@@ -1,4 +1,6 @@
 class Game
+  require 'time'
+
   require_relative 'api/chronicler'
   require_relative 'api/datablase'
 
@@ -46,26 +48,33 @@ class Game
     datablase_api.get_game_events(gameId: game_id).parsed_response
   end
 
-  def game_updates_page_call(after:)
-    chronicler_api.get_game_updates_page(after: after, game: game_id, order: 'asc')
+  def game_updates_page_call(page: nil)
+    chronicler_api.get_game_updates_page(game: game_id, order: 'asc', page: page)
   end
 
   def load_events
-    updates = game_updates_page_call(after:nil).parsed_response
+    updates = game_updates_page_call.parsed_response
+    page = updates['nextPage']
+    data = updates['data']
 
     @events = []
-    @real_time = updates.first['timestamp']
-    @day = updates.first['data']['day']
-    @season = updates.first['data']['season']
-    @weather = updates.first['data']['weather']
-    @away_team_id = updates.first['data']['awayTeam']
-    @home_team_id = updates.first['data']['homeTeam']
+    @real_time = Time.parse(data.first['timestamp'])
+    @day = data.first['data']['day']
+    @season = data.first['data']['season']
+    @weather = data.first['data']['weather']
+    @away_team_id = data.first['data']['awayTeam']
+    @home_team_id = data.first['data']['homeTeam']
 
-    while updates.any?
-      @events += updates.map do |update|
-        update['data'].merge({ 'timestamp' => update['timestamp'] })
+    while data.any?
+      @events += data.map do |datum|
+        d = datum.merge(datum['data'])
+        d['timestamp'] = Time.parse(d['timestamp'])
+        d.delete('data')
+        d
       end
-      updates = game_updates_page_call(after: updates.last['timestamp'])
+      updates = game_updates_page_call(page: page)
+      page = updates['nextPage']
+      data = updates['data']
     end
 
     @events.sort_by! { |ev| ev['timestamp'] }
@@ -73,7 +82,7 @@ class Game
 
   def get_lineup_for(team_id:, time:)
     team_events = team_events_call(team_id: team_id, time: time)
-    lineup = team_events.first['data']['lineup']
+    lineup = team_events['data'].first['data']['lineup']
     player_info = player_info_call(player_ids: lineup)
     lineup.map { |pid| player_info.select { |i| i['player_id'] == pid }.first }
   end
@@ -83,6 +92,12 @@ class Game
   end
 
   def team_events_call(team_id:, time:)
+    time = case time
+    when String
+      time
+    when Time
+      time.iso8601
+    end
     chronicler_api.get_team_updates(before: time, team: team_id, count: 1, order: 'desc').
       parsed_response
   end
