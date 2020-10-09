@@ -13,6 +13,8 @@ module GFX
       center_text = Array(opts[:center_text])
       corner_text = Array(opts[:corner_text])
 
+      @repeating = opts[:repeating]
+
       @height = @width = 100 * @scale
 
       @basepath_width = 2 * @scale
@@ -217,7 +219,7 @@ module GFX
       Square.new(x: @left - frame_radius, y: @top - frame_radius,
         size: @height + (2 * frame_radius), color: 'black', z: 5)
       Square.new(x: @left + frame_radius, y: @top + frame_radius,
-        size: @height - (2 * frame_radius), color: BACKGROUND, z: 6)
+        size: @height - (2 * frame_radius), color: @repeating ? REPEATING : BACKGROUND, z: 6)
     end
 
     def draw_text(x:, y:, data:)
